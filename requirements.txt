@@ -1,0 +1,8 @@
+nicfit.py
+Pillow
+pylast
+requests
+
+aiohttp
+aioauth-client
+facebook-api
