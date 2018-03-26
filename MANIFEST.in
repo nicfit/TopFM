@@ -1,0 +1,21 @@
+include AUTHORS.rst
+include CONTRIBUTING.rst
+include HISTORY.rst
+include LICENSE
+include README.rst
+include Makefile
+include tox.ini
+
+
+
+recursive-include ./tests *.py
+
+exclude .cookiecutter.yml
+exclude .gitchangelog.rc
+global-exclude __pycache__
+global-exclude .editorconfig
+global-exclude *.py[co]
+
+include requirements.txt
+
+
