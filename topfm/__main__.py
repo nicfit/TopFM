@@ -54,7 +54,7 @@ class TopFmApp(Application):
             CACHE_D.mkdir(parents=True)
         log.debug(f"Using cache directory {CACHE_D}")
 
-        lastfm_user = lastfm.user(args)
+        lastfm_user = lastfm.User(args.lastfm_user)
         display_name = args.display_name or lastfm_user.name
 
         if args.subcommand in ("artists", "albums"):
@@ -116,7 +116,8 @@ class TopFmApp(Application):
                 fb = facebook.GraphAPI(access_token=fb_creds["access_token"],
                                        timeout=90, version="2.6")
                 message = f"{text}\n\n" +\
-                          f"\tCreated with {TOPFM_URL}\n"
+                     f"\tCreated with {TOPFM_URL}\n"
+
                 if args.collage:
                     put = fb.put_photo(image=Path(img_filename).read_bytes(),
                                        message=message)

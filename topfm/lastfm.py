@@ -1,4 +1,6 @@
 import datetime
+import functools
+
 import pylast
 from pylast import LastFMNetwork
 
@@ -27,19 +29,20 @@ def topAlbums(user, period, num=5):
     return _lastfmGet(user.get_top_albums, period, num=num)
 
 
-def user(args):
-    return pylast.User(args.lastfm_user,
-                       LastFMNetwork(api_key=API_KEY, api_secret=API_SEC))
+def User(username):
+    return pylast.User(username, LastFMNetwork(api_key=API_KEY,
+                                               api_secret=API_SEC))
 
 
-PERIODS = (pylast.PERIOD_12MONTHS + 's', pylast.PERIOD_3MONTHS + 's',
+PERIODS = (pylast.PERIOD_12MONTHS + 's', pylast.PERIOD_1MONTH,
+           pylast.PERIOD_3MONTHS + 's',
            pylast.PERIOD_6MONTHS + 's', pylast.PERIOD_7DAYS + 's',
            pylast.PERIOD_OVERALL)
 
 
 def periodString(p):
     # TODO: when p == overall compute since based on lastfm join date
-    for unit in ("days", "months"):
+    for unit in ("days", "months", "month"):
         if p.endswith(unit):
             val = int(p[:p.find(unit)])
             td = datetime.timedelta(days=val) if unit == "days" \
