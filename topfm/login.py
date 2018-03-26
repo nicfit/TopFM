@@ -37,11 +37,11 @@ async def facebookLogin():
 
 
 async def _oauth(request):
-    params = {'client_id': FB_APP_ID,
-              'client_secret': FB_APP_SECRET,
-              'scope': 'publish_actions'}
+    params = {"client_id": FB_APP_ID,
+              "client_secret": FB_APP_SECRET,
+              "scope": "publish_actions"}
     client = FacebookClient(**params)
-    client.params['redirect_uri'] = 'http://%s%s' % (request.host, request.path)
+    client.params["redirect_uri"] = f"http://{request.host}{request.path}"
 
     # Check if is not redirect from provider
     if client.shared_key not in request.query:

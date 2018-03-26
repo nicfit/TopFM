@@ -1,3 +1,4 @@
+import datetime
 import pylast
 from pylast import LastFMNetwork
 
@@ -6,8 +7,6 @@ API_SEC = "aa8ee0a4c0a2bcc5bd33e506e7a5fefe"
 
 
 def _lastfmGet(func, period, num=4):
-    """
-    """
     if period[-1] == 's':
         # String forms are not plural, as are the constants are opts so chop
         period = period[:-1]
@@ -39,7 +38,12 @@ PERIODS = (pylast.PERIOD_12MONTHS + 's', pylast.PERIOD_3MONTHS + 's',
 
 
 def periodString(p):
+    # TODO: when p == overall compute since based on lastfm join date
     for unit in ("days", "months"):
         if p.endswith(unit):
-            return "in the last {:d} {}".format(int(p[:p.find(unit)]), unit)
+            val = int(p[:p.find(unit)])
+            td = datetime.timedelta(days=val) if unit == "days" \
+                    else datetime.timedelta(weeks=val * 4)
+            return f"in the last {val} {unit} "\
+                   f"(since {datetime.date.today() - td})"
     return p
