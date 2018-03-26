@@ -5,4 +5,4 @@ requests
 
 aiohttp
 aioauth-client
-facebook-api
+facebook-sdk
