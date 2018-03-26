@@ -1,15 +1,11 @@
 import os
 import sys
 import json
-import asyncio
-import logging
-import configparser
-from argparse import ArgumentParser
 
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 from .login import facebookLogin
-from . import lastfm, collage, CACHE_D
+from . import lastfm, collage, CACHE_D, version
 
 log = getLogger("topfm.__main__")
 
@@ -96,6 +92,6 @@ class TopFmApp(Application):
         return 0
 
 
-app = TopFmApp()
+app = TopFmApp(version=version)
 if __name__ == "__main__":
     app.run()
