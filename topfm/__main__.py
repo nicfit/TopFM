@@ -3,6 +3,7 @@ import sys
 import json
 from  pathlib import Path
 from textwrap import dedent
+from  datetime import datetime
 
 import facebook
 from nicfit.aio import Application
@@ -68,7 +69,12 @@ class TopFmApp(Application):
         elif args.subcommand == "artists":
             tops = lastfm.topArtists(lastfm_user, args.period, num=args.top_n)
 
-        period = lastfm.periodString(args.period)
+        if args.period == "overall":
+            reg = datetime.fromtimestamp(lastfm_user.get_unixtime_registered())
+            period = f"overall (Since {reg:%b %d, %Y})"
+        else:
+            period = lastfm.periodString(args.period)
+
         if not tops:
             print(f"\nNo Top {args.subcommand} found for {period}:")
             return 2

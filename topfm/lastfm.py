@@ -1,5 +1,4 @@
 import datetime
-import functools
 
 import pylast
 from pylast import LastFMNetwork
@@ -35,18 +34,16 @@ def User(username):
 
 
 PERIODS = (pylast.PERIOD_12MONTHS + 's', pylast.PERIOD_1MONTH,
-           pylast.PERIOD_3MONTHS + 's',
-           pylast.PERIOD_6MONTHS + 's', pylast.PERIOD_7DAYS + 's',
-           pylast.PERIOD_OVERALL)
+           pylast.PERIOD_3MONTHS + 's', pylast.PERIOD_6MONTHS + 's',
+           pylast.PERIOD_7DAYS + 's', pylast.PERIOD_OVERALL)
 
 
 def periodString(p):
-    # TODO: when p == overall compute since based on lastfm join date
     for unit in ("days", "months", "month"):
         if p.endswith(unit):
             val = int(p[:p.find(unit)])
             td = datetime.timedelta(days=val) if unit == "days" \
                     else datetime.timedelta(weeks=val * 4)
             return f"in the last {val} {unit} "\
-                   f"(since {datetime.date.today() - td})"
+                   f"(since {datetime.date.today() - td:%b %d, %Y})"
     return p
