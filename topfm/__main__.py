@@ -125,7 +125,7 @@ async def _postFacebook(collage_path, text):
 
     print("Posting to facebook...")
     fb = facebook.GraphAPI(access_token=fb_creds["access_token"], timeout=90,
-                           version="2.6")
+                           version="2.7")
     message = f"{text}\n\n" +\
               f"\tCreated with {TOPFM_URL}\n"
 
