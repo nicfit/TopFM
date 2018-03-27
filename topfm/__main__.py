@@ -50,6 +50,11 @@ class TopFmApp(Application):
         log.debug("{} started: {}".format(sys.argv[0], args))
         log.verbose("main args: {}".format(args))
 
+        if args.subcommand not in ("artists", "albums"):
+            print(f"Unknown sub command: {args.subcommand}")
+            self.arg_parser.print_usage()
+            return 1
+
         if not CACHE_D.exists():
             CACHE_D.mkdir(parents=True)
         log.debug(f"Using cache directory {CACHE_D}")
@@ -57,82 +62,74 @@ class TopFmApp(Application):
         lastfm_user = lastfm.User(args.lastfm_user)
         display_name = args.display_name or lastfm_user.name
 
-        if args.subcommand in ("artists", "albums"):
+        tops = None
+        if args.subcommand == "albums":
+            tops = lastfm.topAlbums(lastfm_user, args.period, num=args.top_n)
+        elif args.subcommand == "artists":
+            tops = lastfm.topArtists(lastfm_user, args.period, num=args.top_n)
 
-            tops = None
-            if args.subcommand == "albums":
-                tops = lastfm.topAlbums(lastfm_user, args.period,
-                                        num=args.top_n)
-            elif args.subcommand == "artists":
-                tops = lastfm.topArtists(lastfm_user, args.period,
-                                         num=args.top_n)
+        period = lastfm.periodString(args.period)
+        if not tops:
+            print(f"\nNo Top {args.subcommand} found for {period}:")
+            return 2
 
-            period = lastfm.periodString(args.period)
-            if not tops:
-                print(f"\nNo Top {args.subcommand} found for {period}:")
-                return 2
+        text = dedent(f"""
+        {display_name}'s Top {args.top_n} {args.subcommand} {period}:\n
+        """)
+        iwitdh = len(str(len(tops))) + 2
+        for i, obj in tops:
+            itext = f"#{i:d}:"
+            text += f" {itext:>{iwitdh}} {obj}\n"
+        text += "\n"
+        print(text)
 
-            text = dedent(f"""
-            {display_name}'s Top {args.top_n} {args.subcommand} {period}:\n
-            """)
-            iwitdh = len(str(len(tops))) + 2
-            for i, obj in tops:
-                itext = f"#{i:d}:"
-                text += f" {itext:>{iwitdh}} {obj}\n"
-            text += "\n"
-            print(text)
+        collage_path = None
+        if args.collage:
+            if args.collage == "1x2x2":
+                img = collage.img1x2x2(tops)
+            else:
+                assert(args.collage.count("x") == 1)
+                rows , cols = (int(n) for n in args.collage.split("x"))
+                try:
+                    img = collage.imgNxN(tops, rows=rows, cols=cols,
+                                         sz=args.image_size,
+                                         margin=args.image_margin)
+                except ValueError as err:
+                    print(str(err))
+                    return 4
+            assert(img)
 
-            img_filename = None
-            if args.collage:
-                if args.collage == "1x2x2":
-                    img = collage.img1x2x2(tops)
-                else:
-                    assert(args.collage.count("x") == 1)
-                    rows , cols = (int(n) for n in args.collage.split("x"))
-                    try:
-                        img = collage.imgNxN(tops, rows=rows, cols=cols,
-                                             sz=args.image_size,
-                                             margin=args.image_margin)
-                    except ValueError as err:
-                        print(str(err))
-                        return 4
-                assert(img)
+            collage_path = "{}.png".format(args.collage_name)
+            print("Writing {}...".format(collage_path))
+            img.save(collage_path)
 
-                img_filename = "{}.png".format(args.collage_name)
-                print("Writing {}...".format(img_filename))
-                img.save(img_filename)
-                os.system("eog {}".format(img_filename))
+            # TODO: add option to skip this
+            os.system("eog {}".format(collage_path))
 
-            if args.post_facebook:
-                fb_creds = None
-                if fb_creds is None and not FB_AUTH_JSON_FILE.exists():
-                    fb_creds = await facebookLogin()
-                    FB_AUTH_JSON_FILE.write_text(json.dumps(fb_creds))
-                    print("Login success")
-                else:
-                    fb_creds = json.loads(FB_AUTH_JSON_FILE.read_text())
+        if args.post_facebook:
+            await _postFacebook(collage_path, text)
 
-                print("Posting to facebook...")
-                fb = facebook.GraphAPI(access_token=fb_creds["access_token"],
-                                       timeout=90, version="2.6")
-                message = f"{text}\n\n" +\
-                     f"\tCreated with {TOPFM_URL}\n"
 
-                if args.collage:
-                    put = fb.put_photo(image=Path(img_filename).read_bytes(),
-                                       message=message)
-                else:
-                    put = fb.put_object(parent_object="me",
-                                        connection_name="feed",
-                                        message=message)
-                log.debug(f"Facebook resp: {put}")
-                print("Done")
-        else:
-            print(f"Unknown sub command: {args.subcommand}")
-            self.arg_parser.print_usage()
-            return 1
+async def _postFacebook(collage_path, text):
+    if not FB_AUTH_JSON_FILE.exists():
+        fb_creds = await facebookLogin()
+        FB_AUTH_JSON_FILE.write_text(json.dumps(fb_creds))
+    else:
+        fb_creds = json.loads(FB_AUTH_JSON_FILE.read_text())
 
-        return 0
+    print("Posting to facebook...")
+    fb = facebook.GraphAPI(access_token=fb_creds["access_token"], timeout=90,
+                           version="2.6")
+    message = f"{text}\n\n" +\
+              f"\tCreated with {TOPFM_URL}\n"
+
+    if collage_path:
+        put = fb.put_photo(image=Path(collage_path).read_bytes(),
+                           message=message)
+    else:
+        put = fb.put_object(parent_object="me", connection_name="feed",
+                            message=message)
+    log.debug(f"Facebook resp: {put}")
 
 
 app = TopFmApp(version=version)
