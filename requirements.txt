@@ -1,5 +1,5 @@
 nicfit.py==0.8
-Pillow
+Pillow==5.0.0
 pylast
 requests
 
