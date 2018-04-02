@@ -1,7 +1,7 @@
 nicfit.py==0.8
 Pillow==5.0.0
 pylast==2.1.0
-requests
+requests==2.18.4
 
 aiohttp
 aioauth-client
