@@ -1,6 +1,6 @@
 nicfit.py==0.8
 Pillow==5.0.0
-pylast
+pylast==2.1.0
 requests
 
 aiohttp
