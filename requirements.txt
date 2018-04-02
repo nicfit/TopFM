@@ -1,8 +1,8 @@
-nicfit.py
-Pillow
-pylast
-requests
+nicfit.py==0.8
+Pillow==5.0.0
+pylast==2.1.0
+requests==2.18.4
 
-aiohttp
-aioauth-client
-facebook-sdk
+aiohttp==3.1.1
+aioauth-client==0.12.0
+facebook-sdk==2.0.0
