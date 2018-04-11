@@ -7,7 +7,7 @@ nicfit.py[cookiecutter]
 pip-tools
 pss
 pyaml
-sphinx_rtd_theme
+sphinx_rtd_theme==0.3.0
 tox
 twine
 wheel
