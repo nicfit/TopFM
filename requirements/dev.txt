@@ -2,7 +2,7 @@ Sphinx
 check-manifest
 flake8
 git+https://github.com/nicfit/gitchangelog.git
-ipdb
+ipdb==0.11
 nicfit.py[cookiecutter]
 pip-tools
 pss
