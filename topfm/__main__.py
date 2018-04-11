@@ -1,9 +1,9 @@
 import os
 import sys
 import json
-from  pathlib import Path
+from pathlib import Path
 from textwrap import dedent
-from  datetime import datetime
+from datetime import datetime
 
 import facebook
 from nicfit.aio import Application
@@ -45,7 +45,6 @@ class TopFmApp(Application):
         ]:
             for p in (artists_parser, albums_parser):
                 p.add_argument(*args, **kwargs)
-
 
     async def _main(self, args):
         log.debug("{} started: {}".format(sys.argv[0], args))
@@ -95,7 +94,7 @@ class TopFmApp(Application):
                 img = collage.img1x2x2(tops)
             else:
                 assert(args.collage.count("x") == 1)
-                rows , cols = (int(n) for n in args.collage.split("x"))
+                rows, cols = (int(n) for n in args.collage.split("x"))
                 try:
                     img = collage.imgNxN(tops, rows=rows, cols=cols,
                                          sz=args.image_size,

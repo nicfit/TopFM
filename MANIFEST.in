@@ -10,6 +10,7 @@ include tox.ini
 
 recursive-include ./tests *.py
 
+exclude TODO
 exclude .cookiecutter.yml
 exclude .gitchangelog.rc
 global-exclude __pycache__
@@ -17,5 +18,5 @@ global-exclude .editorconfig
 global-exclude *.py[co]
 
 include requirements.txt
-
+recursive-include requirements *.txt *.yml
 

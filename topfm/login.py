@@ -1,4 +1,3 @@
-import html
 import asyncio
 import webbrowser
 from aiohttp import web

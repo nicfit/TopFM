@@ -1,0 +1,33 @@
+main:
+    - nicfit.py
+    - Pillow
+    - pylast
+    - requests
+
+    - aiohttp
+    - aioauth-client
+    - facebook-sdk
+
+#extra_example:
+#    - pkg
+#    - pkg2
+
+test:
+    - pytest
+    - pytest-cov
+    - pytest-runner
+
+dev:
+    - nicfit.py[cookiecutter]
+    - Sphinx
+    - sphinx_rtd_theme
+    - check-manifest
+    - flake8
+    - git+https://github.com/nicfit/gitchangelog.git
+    - ipdb
+    - pip-tools
+    - tox
+    - twine
+    - wheel
+    - pyaml
+    - pss

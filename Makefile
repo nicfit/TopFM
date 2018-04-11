@@ -125,7 +125,8 @@ pre-release: lint test changelog requirements
 	@git status -s -b
 
 requirements:
-	# Using cookiecutter set requirements_yaml="yes" to enable
+	nicfit requirements
+	pip-compile -U requirements.txt -o ./requirements.txt
 
 changelog:
 	last=`git tag -l --sort=version:refname | grep '^v[0-9]' | tail -n1`;\
