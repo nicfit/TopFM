@@ -5,7 +5,7 @@ git+https://github.com/nicfit/gitchangelog.git
 ipdb
 nicfit.py[cookiecutter]
 pip-tools
-pss
+pss==1.41
 pyaml
 sphinx_rtd_theme
 tox
