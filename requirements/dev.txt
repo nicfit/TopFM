@@ -6,7 +6,7 @@ ipdb
 nicfit.py[cookiecutter]
 pip-tools
 pss
-pyaml
+pyaml==17.12.1
 sphinx_rtd_theme
 tox
 twine
