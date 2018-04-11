@@ -8,6 +8,6 @@ pip-tools
 pss
 pyaml
 sphinx_rtd_theme
-tox
+tox==3.0.0
 twine
 wheel==0.31.0
