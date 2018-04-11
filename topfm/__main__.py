@@ -36,7 +36,7 @@ class TopFmApp(Application):
                               "choices": ["2x2", "3x3", "4x4", "5x5", "5x2",
                                           "5x3", "1x2x2", "10x10"],
                               "dest": "collage"}),
-            (("--collage-name",), {"default": "collage", "type": str,
+            (("--collage-name",), {"default": None, "type": str,
                                    "dest": "collage_name", "metavar": "NAME"}),
             (("--image-size",), {"default": collage.IMG_SZ, "type": int,
                                  "dest": "image_size", "metavar": "N"}),
@@ -104,6 +104,10 @@ class TopFmApp(Application):
                     print(str(err))
                     return 4
             assert(img)
+
+            if args.collage_name is None:
+                # FIXME: add period, type, size, etc. to the default
+                args.collage_name = "collage"
 
             collage_path = "{}.png".format(args.collage_name)
             print("Writing {}...".format(collage_path))
