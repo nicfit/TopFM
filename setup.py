@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import io
 import os
 import re
@@ -16,8 +15,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
-    # XXX Remove to enable PyPi uploads
-    "Private :: Do Not Upload",
 ]
 
 
