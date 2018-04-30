@@ -1,15 +1,19 @@
 import os
 from io import BytesIO
 from pathlib import Path
+
 import pylast
 import requests
 from PIL import Image
-from . import CACHE_D
+
+from . import CACHE_D, PromptMode
 
 IMG_SZ = 300
+UNKNOWN_ALBUM_IMG = None  # Set lazily
+UNKNOWN_ALBUM_FILE = Path(__file__).parent / "unknown-cover.jpg"
 
 
-def img1x2x2(tops):
+def img1x2x2(tops, prompts=PromptMode.ON):
     collage = Image.new("RGB", (800, 400), "white")
 
     for i, obj in tops[:5]:
@@ -17,13 +21,13 @@ def img1x2x2(tops):
                       (400, 0, 200, 200), (600, 0, 200, 200),
                       (400, 200, 200, 200), (600, 200, 200, 200)][i - 1]
 
-        img = _getImg(i, obj)
+        img = _getImg(i, obj, prompts=prompts)
         _addCover(collage, img, x, y, w, h)
 
     return collage
 
 
-def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0):
+def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0, prompts=PromptMode.ON):
     if len(tops) < rows * cols:
         raise ValueError("{:d} top image items required, {:d} provided"
                          .format(rows * cols, len(tops)))
@@ -43,30 +47,27 @@ def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0):
     for i, obj in tops[:rows * cols]:
         x, y = coords[i - 1]
 
-        img = _getImg(i, obj)
+        img = _getImg(i, obj, prompts=prompts)
         _addCover(collage, img, x, y, sz, sz)
 
     return collage
 
 
 def _addCover(image, cover_src, x, y, w, h):
-    cimg = cover_src
-    cimg = cimg.resize((w, h))
+    cimg = cover_src.resize((w, h))
     image.paste(cimg, (x, y))
     return cimg
 
 
-def _getImg(i, obj):
+def _getImg(i, obj, prompts=PromptMode.ON):
+    global UNKNOWN_ALBUM_IMG
+
     if isinstance(obj, pylast.Album):
-        print("#{i} {title} by {artist}\n"
-              "\tdownloading {cover_url}"
-              .format(i=i, title=obj.title, cover_url=obj.get_cover_image(),
-                      artist=obj.artist.name))
+        print("Album art: {title} by {artist}"
+              .format(i=i, title=obj.title, artist=obj.artist.name),
+              end=" ")
     elif isinstance(obj, pylast.Artist):
-        print("#{i} {artist}\n"
-              "\tdownloading {cover_url}"
-              .format(i=i, cover_url=obj.get_cover_image(),
-                      artist=obj.name))
+        print("Artist img: {artist}".format(i=i, artist=obj.name), end=" ")
     else:
         raise ValueError("Invalid type: {}".format(obj.__class__.__name__))
 
@@ -75,26 +76,41 @@ def _getImg(i, obj):
         cache_id = obj.get_name()
         if hasattr(obj, "artist"):
             cache_id += f"_{obj.artist.name}"
-    cache_id = cache_id.replace(os.sep, '-')
+    cache_id = cache_id.replace(os.path.sep, '-')
 
     if not CACHE_D.exists():
         CACHE_D.mkdir()
 
     cached_img = CACHE_D / Path(f"{cache_id}.png")
     if cached_img.exists():
-        print("Using cached image: {}".format(cached_img))
+        print(" [cached]: {}".format(cached_img))
         img = Image.open(str(cached_img))
     else:
         cover_url = obj.get_cover_image()
         if not cover_url:
-            print("No cover URL, enter valid URL: ", end='')
-            cover_url = input()
+            if prompts == PromptMode.FAIL:
+                raise ValueError("No cover found, and prompting is fail mode")
 
-        cover_req = requests.get(cover_url)
-        if cover_req.status_code == 200:
-            img = Image.open(BytesIO(cover_req.content))
+            cover_url = input("\nNo cover URL, enter download URL: ")\
+                            if prompts == PromptMode.ON else UNKNOWN_ALBUM_FILE
+
+        if cover_url != UNKNOWN_ALBUM_FILE:
+            print(" [downloading]: {}".format(cover_url))
+            try:
+                cover_req = requests.get(cover_url)
+            except Exception as ex:
+                raise ValueError(str(ex)) from None
+
+            if cover_req.status_code == 200:
+                img = Image.open(BytesIO(cover_req.content))
+            else:
+                raise ValueError(f"Download of '{cover_url}' failed: {cover_req}")
+            img.save(str(cached_img))
         else:
-            raise ValueError(f"Download of '{cover_url}' failed: {cover_req}")
-        img.save(str(cached_img))
+            img = UNKNOWN_ALBUM_IMG if UNKNOWN_ALBUM_IMG \
+                        else Image.open(UNKNOWN_ALBUM_FILE)
+            UNKNOWN_ALBUM_IMG = img
+            print("  [default]")
 
+    assert img
     return img

@@ -28,9 +28,16 @@ def topAlbums(user, period, num=5):
     return _lastfmGet(user.get_top_albums, period, num=num)
 
 
-def User(username):
-    return pylast.User(username, LastFMNetwork(api_key=API_KEY,
-                                               api_secret=API_SEC))
+def topTracks(user, period, num=5):
+    return _lastfmGet(user.get_top_tracks, period, num=num)
+
+
+
+def User(username, password=None):
+    password = pylast.md5(password) if password else None
+    return pylast.User(username,
+                       LastFMNetwork(api_key=API_KEY, api_secret=API_SEC,
+                                     password_hash=password))
 
 
 PERIODS = (pylast.PERIOD_12MONTHS + 's', pylast.PERIOD_1MONTH,

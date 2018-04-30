@@ -1,4 +1,2 @@
-- Option to skip `eog`
-- Option to prevent *any* prompting
-- Default collage name should be more telling (include type, period, etc)
-- Fallback option for using artist image in place of missing albums.
+- help strings
+- fail if image not found

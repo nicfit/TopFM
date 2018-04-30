@@ -5,9 +5,6 @@ include LICENSE
 include README.rst
 include Makefile
 include tox.ini
-
-
-
 recursive-include ./tests *.py
 
 exclude TODO
@@ -20,3 +17,4 @@ global-exclude *.py[co]
 include requirements.txt
 recursive-include requirements *.txt *.yml
 
+include topfm/unknown-cover.jpg

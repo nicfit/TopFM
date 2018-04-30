@@ -101,8 +101,6 @@ class PipInstallCommand(install, object):
 
 PKG_INFO, REQUIREMENTS = getPackageInfo()
 if PKG_INFO["release"].startswith("a"):
-    #classifiers.append("Development Status :: 1 - Planning")
-    #classifiers.append("Development Status :: 2 - Pre-Alpha")
     classifiers.append("Development Status :: 3 - Alpha")
 elif PKG_INFO["release"].startswith("b"):
     classifiers.append("Development Status :: 4 - Beta")
@@ -147,7 +145,7 @@ else:
               keywords=["topfm"],
               test_suite="./tests",
               include_package_data=True,
-              package_data={},
+              package_data={"": ["unknown-cover.jpg"]},
               entry_points={
                   "console_scripts": [
                       "topfm = topfm.__main__:app.run",
