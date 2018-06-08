@@ -10,7 +10,7 @@ async-timeout==3.0.3      # via aiohttp
 attrs==18.1.0             # via aiohttp, nicfit.py
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via aiohttp, requests
-deprecation==2.0.2        # via nicfit.py
+deprecation==2.0.3        # via nicfit.py
 facebook-sdk==2.0.0
 idna-ssl==1.0.1           # via aiohttp
 idna==2.6                 # via idna-ssl, requests, yarl
