@@ -14,7 +14,7 @@ deprecation==2.0.5        # via nicfit.py
 facebook-sdk==2.0.0
 idna-ssl==1.1.0           # via aiohttp
 idna==2.7                 # via idna-ssl, requests, yarl
-multidict==4.3.0          # via aiohttp, yarl
+multidict==4.3.1          # via aiohttp, yarl
 nicfit.py==0.8.1
 packaging==17.1           # via deprecation
 pillow==5.2.0
