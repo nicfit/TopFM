@@ -18,7 +18,7 @@ multidict==4.3.0          # via aiohttp, yarl
 nicfit.py==0.8.1
 packaging==17.1           # via deprecation
 pillow==5.2.0
-pylast==2.3.0
+pylast==2.4.0
 pyparsing==2.2.0          # via packaging
 requests==2.19.1
 six==1.11.0               # via packaging, pylast
