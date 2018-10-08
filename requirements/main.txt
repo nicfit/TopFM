@@ -1,5 +1,5 @@
 Pillow==5.2.0
-aioauth-client==0.12.0
+aioauth-client==0.12.4
 aiohttp==3.4.4
 facebook-sdk==2.0.0
 nicfit.py==0.8.2
