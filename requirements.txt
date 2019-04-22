@@ -22,5 +22,5 @@ pylast==2.3.0
 pyparsing==2.2.1          # via packaging
 requests==2.20.1
 six==1.11.0               # via packaging, pylast
-urllib3==1.22             # via requests
+urllib3==1.25             # via requests
 yarl==1.2.6               # via aiohttp
