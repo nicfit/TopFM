@@ -1,5 +1,5 @@
 Sphinx==1.8.1
-check-manifest==0.37
+check-manifest==0.38
 flake8==3.5.0
 git+https://github.com/nicfit/gitchangelog.git
 ipdb=0.11
