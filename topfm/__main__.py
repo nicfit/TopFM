@@ -47,8 +47,8 @@ class TopFmApp(Application):
              (artists_parser, albums_parser, tracks_parser, recent_parser),
             ),
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
-                              "choices": ["2x2", "3x3", "4x4", "5x5", "5x2",
-                                          "5x3", "1x2x2", "10x10"],
+                              "choices": ["2x2", "2x4", "3x3", "4x4", "4x2", "5x5", "5x2", "5x3",
+                                          "1x2x2", "10x10"],
                               "dest": "collage"},
              (artists_parser, albums_parser),
             ),
@@ -180,7 +180,7 @@ class TopFmApp(Application):
         try:
             await handler(args, lastfm_user)
         except facebook.GraphAPIError as err:
-            print(f"Facebook error: {err}")
+            print(f"Facebook error: {err}", file=sys.stderr)
 
 
 async def _postFacebook(message, photo_path, comments):
