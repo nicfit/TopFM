@@ -20,7 +20,7 @@ packaging==19.0           # via deprecation
 pillow==6.1.0
 pylast==2.3.0
 pyparsing==2.4.1.1        # via packaging
-pyyaml==5.1.1             # via nicfit.py
+pyyaml==5.1.2             # via nicfit.py
 requests==2.20.1
 six==1.12.0               # via packaging, pylast
 urllib3==1.25.3           # via requests
