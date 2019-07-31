@@ -3,7 +3,7 @@ check-manifest==0.37
 flake8==3.7.8
 git+https://github.com/nicfit/gitchangelog.git
 ipdb=0.11
-nicfit.py[cookiecutter]==0.8.2
+nicfit.py[cookiecutter]==0.8.4
 pip-tools==4.0.0
 pss==1.42
 pyaml==17.12.1
