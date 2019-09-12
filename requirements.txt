@@ -8,7 +8,7 @@ aioauth-client==0.12.0
 aiohttp==3.4.4
 async-timeout==3.0.1      # via aiohttp
 attrs==19.1.0             # via aiohttp, nicfit.py
-certifi==2019.6.16        # via requests
+certifi==2019.9.11        # via requests
 chardet==3.0.4            # via aiohttp, requests
 deprecation==2.0.6        # via nicfit.py
 facebook-sdk==2.0.0
