@@ -16,7 +16,7 @@ idna-ssl==1.1.0           # via aiohttp
 idna==2.8                 # via idna-ssl, requests, yarl
 multidict==4.5.2          # via aiohttp, yarl
 nicfit.py==0.8.5
-packaging==19.0           # via deprecation
+packaging==19.2           # via deprecation
 pillow==6.1.0
 pylast==2.3.0
 pyparsing==2.4.1.1        # via packaging
