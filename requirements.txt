@@ -23,5 +23,5 @@ pyparsing==2.4.1.1        # via packaging
 pyyaml==5.1.1             # via nicfit.py
 requests==2.20.1
 six==1.12.0               # via packaging, pylast
-urllib3==1.25.3           # via requests
+urllib3==1.25.5           # via requests
 yarl==1.3.0               # via aiohttp
