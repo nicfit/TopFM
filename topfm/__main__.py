@@ -47,8 +47,9 @@ class TopFmApp(Application):
              (artists_parser, albums_parser, tracks_parser, recent_parser),
             ),
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
-                              "choices": ["2x2", "2x4", "3x3", "4x4", "4x2", "5x5", "5x2", "5x3",
-                                          "1x2x2", "10x10"],
+                              "choices": ["2x2", "2x4", "3x3", "4x4", "4x2",
+                                          "5x5", "5x2", "5x3", "5x100",
+                                          "1x2x2", "10x10", "20x20"],
                               "dest": "collage"},
              (artists_parser, albums_parser),
             ),
@@ -67,6 +68,18 @@ class TopFmApp(Application):
             (("--no-image-view",), {"action": "store_true"},
              (artists_parser, albums_parser),
             ),
+            (("--exclude-artist",), {"action": "append",
+                                     "dest": "artist_excludes"},
+             (artists_parser, albums_parser, tracks_parser, recent_parser),
+            ),
+            (("--exclude-album",), {"action": "append",
+                                    "dest": "album_excludes"},
+             (artists_parser, albums_parser, tracks_parser, recent_parser),
+            ),
+            (("--exclude-track",), {"action": "append",
+                                    "dest": "track_excludes"},
+             (artists_parser, albums_parser, tracks_parser, recent_parser),
+            ),
 
         ]:
             for p in parsers:
@@ -76,7 +89,12 @@ class TopFmApp(Application):
         display_name = args.display_name or lastfm_user.name
 
         handler = getattr(lastfm, f"top{args.subcommand.title()}")
-        tops = handler(lastfm_user, args.period, num=args.top_n)
+        tops = handler(lastfm_user, args.period, num=args.top_n,
+                       excludes={
+                           "artist": args.artist_excludes,
+                           "album": args.album_excludes,
+                           "track": args.track_excludes,
+                       })
 
         if args.period == "overall":
             reg = datetime.fromtimestamp(lastfm_user.get_unixtime_registered())

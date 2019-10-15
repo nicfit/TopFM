@@ -63,15 +63,18 @@ def _getImg(i, obj, prompts=PromptMode.ON):
     global UNKNOWN_ALBUM_IMG
 
     if isinstance(obj, pylast.Album):
-        print("Album art: {title} by {artist}"
-              .format(i=i, title=obj.title, artist=obj.artist.name),
-              end=" ")
+        print(f"#{i} Album art: {obj.title} by {obj.artist.name}", end=" ")
     elif isinstance(obj, pylast.Artist):
         print("Artist img: {artist}".format(i=i, artist=obj.name), end=" ")
     else:
         raise ValueError("Invalid type: {}".format(obj.__class__.__name__))
 
-    cache_id = obj.get_mbid()
+    try:
+        cache_id = obj.get_mbid()
+    except pylast.WSError:
+        # Fall thru...
+        cache_id = None
+
     if not cache_id:
         cache_id = obj.get_name()
         if hasattr(obj, "artist"):
@@ -86,7 +89,12 @@ def _getImg(i, obj, prompts=PromptMode.ON):
         print(" [cached]: {}".format(cached_img))
         img = Image.open(str(cached_img))
     else:
-        cover_url = obj.get_cover_image()
+        try:
+            cover_url = obj.get_cover_image()
+        except pylast.WSError:
+            # Fall thru...
+            cover_url = None
+
         if not cover_url:
             if prompts == PromptMode.FAIL:
                 raise ValueError("No cover found, and prompting is fail mode")
