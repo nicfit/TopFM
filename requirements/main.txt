@@ -1,4 +1,4 @@
-Pillow==6.2.0
+Pillow==6.2.1
 aioauth-client==0.12.0
 aiohttp==3.6.2
 facebook-sdk==2.0.0
