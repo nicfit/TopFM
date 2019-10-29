@@ -1,6 +1,6 @@
 Sphinx==1.8.1
 check-manifest==0.37
-flake8==3.7.8
+flake8==3.7.9
 git+https://github.com/nicfit/gitchangelog.git
 ipdb=0.11
 nicfit.py[cookiecutter]==0.8.5
