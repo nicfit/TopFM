@@ -33,18 +33,23 @@ class TopFmApp(Application):
         artists_parser = subs.add_parser("artists", help="Query top artists.")
         albums_parser = subs.add_parser("albums", help="Query top albums.")
         tracks_parser = subs.add_parser("tracks", help="Query top tracks.")
+        loved_parser = subs.add_parser("loved", help="Query loved tracks.")
 
         recent_parser = subs.add_parser("recent", help="Query recent tracks.")
-        recent_parser.add_argument("-L", "--loved")
 
         for args, kwargs, parsers in [
             (("-N", "--top-n"),
              {"default": 10, "type": int, "dest": "top_n", "metavar": "N"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser),
             ),
+            (("-n", "--limit"),
+             {"default": 50, "type": int, "dest": "limit", "metavar": "N"},
+             (recent_parser, loved_parser),
+             ),
             (("-P", "--period"), {"default": "overall",
-                                  "choices": lastfm.PERIODS, "dest": "period"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+                                  "choices": lastfm.PERIODS,
+                                  "dest": "period"},
+             (artists_parser, albums_parser, tracks_parser),
             ),
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
                               "choices": ["2x2", "2x4", "3x3", "4x4", "4x2",
@@ -70,15 +75,15 @@ class TopFmApp(Application):
             ),
             (("--exclude-artist",), {"action": "append",
                                      "dest": "artist_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
             (("--exclude-album",), {"action": "append",
                                     "dest": "album_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
             (("--exclude-track",), {"action": "append",
                                     "dest": "track_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
 
         ]:
@@ -168,13 +173,45 @@ class TopFmApp(Application):
             await _postFacebook(text, None, comments)
 
     async def _handleRecentCmd(self, args, lastfm_user):
-        tracks = lastfm_user.get_recent_tracks(limit=300)
-        for t in tracks:
-            t.track.username = "nicfit"
-            print("<3:", t.track.get_userloved())
-        print(len(tracks))
-        print(tracks[0])
-        print(tracks[-1])
+        # FIXME: wip
+        # TODO: header. Last N played...
+        # TODO: show album name
+        # TODO: query, show loved, not working
+        # yes, asking for limit=N returns len() N-1, so the +1
+        tracks = lastfm_user.get_recent_tracks(limit=args.limit + 1)
+        tracks = lastfm.filterExcludes(tracks, excludes={"artist": args.artist_excludes,
+                                                         "album": args.album_excludes,
+                                                         "track": args.track_excludes,
+                                                        })
+        for recent in tracks:
+            # FIXME: format
+            print(f"{recent.track.title}, {recent.track.artist.name}")
+            # FIXME: loved, always returns False
+            '''
+            if show_loved:
+                recent.track.username = lastfm_user.name
+                print("<3:", recent.track.get_userloved())
+            '''
+
+    async def _handleLovedCmd(self, args, lastfm_user):
+        # FIXME: wip
+        # TODO: header. Loved shit...
+        # TODO: show album name
+        loved = lastfm.filterExcludes(
+            lastfm_user.get_loved_tracks(limit=args.limit or None),
+            excludes={"artist": args.artist_excludes,
+                      "album": args.album_excludes,
+                      "track": args.track_excludes,
+                     })
+
+        for recent in loved:
+            #import pdb; pdb.set_trace()  # FIXME
+            pass  # FIXME
+            # FIXME: format
+            data = {"track": recent.track.title, "artist": recent.track.artist.name}
+            #print(f"{data['track']}, {data['artist']}")
+            import json
+            print(f"{json.dumps(data)}")
 
     async def _main(self, args):
         log.debug("{} started: {}".format(sys.argv[0], args))
