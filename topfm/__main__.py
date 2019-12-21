@@ -85,21 +85,29 @@ class TopFmApp(Application):
                                     "dest": "track_excludes"},
              (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
+            (("--unique-artist",), {"action": "store_true",
+                                    "help": "Only include top item for each artist."},
+             (albums_parser, tracks_parser),
+             ),
 
         ]:
             for p in parsers:
                 p.add_argument(*args, **kwargs)
 
-    def _getTops(self, args, lastfm_user):
+    @staticmethod
+    def _getTops(args, lastfm_user):
         display_name = args.display_name or lastfm_user.name
 
         handler = getattr(lastfm, f"top{args.subcommand.title()}")
-        tops = handler(lastfm_user, args.period, num=args.top_n,
-                       excludes={
-                           "artist": args.artist_excludes,
-                           "album": args.album_excludes,
-                           "track": args.track_excludes,
-                       })
+        handler_kwargs = dict(num=args.top_n,
+                              excludes={"artist": args.artist_excludes,
+                                        "album": args.album_excludes,
+                                        "track": args.track_excludes,
+                                       })
+        if "unique_artist" in args and args.unique_artist:
+            handler_kwargs["unique_artist"] = args.unique_artist
+
+        tops = handler(lastfm_user, args.period, **handler_kwargs)
 
         if args.period == "overall":
             reg = datetime.fromtimestamp(lastfm_user.get_unixtime_registered())

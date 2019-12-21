@@ -8,6 +8,15 @@ API_KEY = "1932ab33ea535ba390526dae88a782af"
 API_SEC = "aa8ee0a4c0a2bcc5bd33e506e7a5fefe"
 
 
+def _getItemObj(item):
+    """Extract the lastfm object from a list item."""
+    if isinstance(item, (pylast.PlayedTrack, pylast.LovedTrack)):
+        obj = item
+    else:
+        obj = item.item
+    return obj
+
+
 def filterExcludes(items, excludes: dict) -> list:
     exc_regexes = {}
     for key, expressions in (excludes or {}).items():
@@ -15,10 +24,7 @@ def filterExcludes(items, excludes: dict) -> list:
     excludes = exc_regexes
 
     def f(item):
-        if isinstance(item, (pylast.PlayedTrack, pylast.LovedTrack)):
-            obj = item
-        else:
-            obj = item.item
+        obj = _getItemObj(item)
 
         def _artist(o):
             if isinstance(o, pylast.Artist):
@@ -97,16 +103,32 @@ def filterExcludes(items, excludes: dict) -> list:
     return list(filter(f, items) if excludes else items)
 
 
-def _lastfmGet(func, period, num=4, excludes=None):
+def uniqueArtist(items) -> list:
+    results = []
+    seen_artists = set()
+
+    for item in items:
+        obj = _getItemObj(item)
+        if obj.artist.name not in seen_artists:
+            results.append(item)
+            seen_artists.add(obj.artist.name)
+
+    return results
+
+
+def _lastfmGet(func, period, num=4, excludes=None, unique_artist=False):
     if period[-1] == 's':
         # Pylast periods are not plural, as are the constants are opts so chop
         period = period[:-1]
 
     tops = []
     attempts, max_attempts = 0, 5
+
     while len(tops) < num and attempts < max_attempts:
         attempts += 1
         tops = filterExcludes(func(period, limit=num + (25 * attempts)), excludes)
+        if unique_artist:
+            tops = uniqueArtist(tops)
 
     tops = tops[:num]
     if len(tops) != num:
@@ -120,12 +142,14 @@ def topArtists(user, period, num=5, excludes=None):
     return _lastfmGet(user.get_top_artists, period, num=num, excludes=excludes)
 
 
-def topAlbums(user, period, num=5, excludes: list=None):
-    return _lastfmGet(user.get_top_albums, period, num=num, excludes=excludes)
+def topAlbums(user, period, num=5, excludes: list=None, unique_artist=False):
+    return _lastfmGet(user.get_top_albums, period, num=num, excludes=excludes,
+                      unique_artist=unique_artist)
 
 
-def topTracks(user, period, num=5, excludes=None):
-    return _lastfmGet(user.get_top_tracks, period, num=num, excludes=excludes)
+def topTracks(user, period, num=5, excludes=None, unique_artist=False):
+    return _lastfmGet(user.get_top_tracks, period, num=num, excludes=excludes,
+                      unique_artist=unique_artist)
 
 
 def User(username, password=None):
