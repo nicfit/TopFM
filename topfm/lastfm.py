@@ -134,8 +134,7 @@ def _lastfmGet(func, period, num=4, excludes=None, unique_artist=False):
     if len(tops) != num:
         raise Exception("Requested number of items not returned.")
     else:
-        tops = list(enumerate([a.item for a in tops], 1))
-        return tops
+        return list([a.item for a in tops])
 
 
 def topArtists(user, period, num=5, excludes=None):

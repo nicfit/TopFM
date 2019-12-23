@@ -16,7 +16,7 @@ UNKNOWN_ALBUM_FILE = Path(__file__).parent / "unknown-cover.jpg"
 def img1x2x2(tops, prompts=PromptMode.ON):
     collage = Image.new("RGB", (800, 400), "white")
 
-    for i, obj in tops[:5]:
+    for i, obj in enumerate(tops[:5], 1):
         x, y, w, h = [(0, 0, 400, 400),
                       (400, 0, 200, 200), (600, 0, 200, 200),
                       (400, 200, 200, 200), (600, 200, 200, 200)][i - 1]
@@ -44,7 +44,7 @@ def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0, prompts=PromptMode.ON):
                                 sz * rows + (margin * (cols + 1))),
                         "red")
 
-    for i, obj in tops[:rows * cols]:
+    for i, obj in enumerate(tops[:rows * cols], 1):
         x, y = coords[i - 1]
 
         img = _getImg(i, obj, prompts=prompts)
