@@ -1,29 +1,22 @@
 import os
 import sys
-import json
 import argparse
-from pathlib import Path
 from textwrap import dedent
 from datetime import datetime
-
-import facebook
 
 from pylast import LovedTrack, PlayedTrack
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 
-from .login import facebookLogin
 from . import lastfm, collage, CACHE_D, version, PromptMode
 
 log = getLogger("topfm.__main__")
 TOPFM_URL = "https://github.com/nicfit/TopFM"
-FB_AUTH_JSON_FILE = CACHE_D / "facebook.json"
 
 
 class TopFmApp(Application):
     def _addArguments(self, parser: argparse.ArgumentParser):
         parser.add_argument("--display-name")
-        parser.add_argument("--post-facebook", action="store_true")
         parser.add_argument("-u", "--user", default="nicfit",
                             dest="lastfm_user", metavar="LASTFM_USER")
 
@@ -133,9 +126,6 @@ class TopFmApp(Application):
         for a in tops:
             comments.append(a.get_url())
 
-        if args.post_facebook:
-            await _postFacebook(text, collage_path, comments)
-
     @staticmethod
     async def _handleArtistsCmd(args, lastfm_user):
         return await TopFmApp._handleAlbumsCmd(args, lastfm_user)
@@ -148,9 +138,6 @@ class TopFmApp(Application):
         comments = []
         for t in tops:
             comments.append(t.get_url())
-
-        if args.post_facebook:
-            await _postFacebook(text, None, comments)
 
     @staticmethod
     async def _handleRecentCmd(args, lastfm_user):
@@ -198,38 +185,7 @@ class TopFmApp(Application):
         lastfm_user = lastfm.User(args.lastfm_user, os.getenv("LASTFM_PASSWORD"))
 
         handler = getattr(self, f"_handle{args.subcommand.title()}Cmd", None)
-        try:
-            await handler(args, lastfm_user)
-        except facebook.GraphAPIError as err:
-            print(f"Facebook error: {err}", file=sys.stderr)
-
-
-async def _postFacebook(message, photo_path, comments):
-    if not FB_AUTH_JSON_FILE.exists():
-        fb_creds = await facebookLogin()
-        FB_AUTH_JSON_FILE.write_text(json.dumps(fb_creds))
-    else:
-        fb_creds = json.loads(FB_AUTH_JSON_FILE.read_text())
-
-    print("Posting to facebook...")
-    fb = facebook.GraphAPI(access_token=fb_creds["access_token"], timeout=90,
-                           version="2.7")
-    message = f"{message}\n\n" +\
-              f"\tCreated with {TOPFM_URL}\n"
-
-    if photo_path:
-        put = fb.put_photo(image=Path(photo_path).read_bytes(),
-                           message=message)
-    else:
-        put = fb.put_object(parent_object="me", connection_name="feed",
-                            message=message)
-    log.debug(f"Facebook resp: {put}")
-
-    if comments:
-        # TODO: error, need "page access token"
-        #for cmt in (comments or []):
-        #    fb.put_comment(object_id=put["id"], message=cmt)
-        ...
+        await handler(args, lastfm_user)
 
 
 def _getTops(args, lastfm_user):

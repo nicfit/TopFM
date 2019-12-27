@@ -4,14 +4,6 @@ main:
     - pylast
     - requests
 
-    - aiohttp
-    - aioauth-client
-    - facebook-sdk
-
-#extra_example:
-#    - pkg
-#    - pkg2
-
 test:
     - pytest
     - pytest-cov

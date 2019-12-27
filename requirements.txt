@@ -4,24 +4,17 @@
 #
 #    pip-compile --output-file=./requirements.txt requirements.txt
 #
-aioauth-client==0.12.0
-aiohttp==3.6.2
-async-timeout==3.0.1      # via aiohttp
-attrs==19.2.0             # via aiohttp, nicfit.py
-certifi==2019.11.28        # via requests
-chardet==3.0.4            # via aiohttp, requests
+attrs==19.3.0             # via nicfit.py
+certifi==2019.11.28       # via requests
+chardet==3.0.4            # via requests
 deprecation==2.0.7        # via nicfit.py
-facebook-sdk==2.0.0
-idna-ssl==1.1.0           # via aiohttp
-idna==2.8                 # via idna-ssl, requests, yarl
-multidict==4.7.2          # via aiohttp, yarl
+idna==2.7                 # via requests
 nicfit.py==0.8.5
 packaging==19.2           # via deprecation
 pillow==6.2.1
 pylast==2.3.0
 pyparsing==2.4.6          # via packaging
-pyyaml==5.1.2             # via nicfit.py
+pyyaml==5.2               # via nicfit.py
 requests==2.20.1
-six==1.12.0               # via packaging, pylast
-urllib3==1.25.6           # via requests
-yarl==1.4.2               # via aiohttp
+six==1.13.0               # via packaging, pylast
+urllib3==1.24.3           # via requests
