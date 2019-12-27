@@ -7,6 +7,8 @@ from textwrap import dedent
 from datetime import datetime
 
 import facebook
+
+from pylast import LovedTrack, PlayedTrack
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 
@@ -33,18 +35,23 @@ class TopFmApp(Application):
         artists_parser = subs.add_parser("artists", help="Query top artists.")
         albums_parser = subs.add_parser("albums", help="Query top albums.")
         tracks_parser = subs.add_parser("tracks", help="Query top tracks.")
+        loved_parser = subs.add_parser("loved", help="Query loved tracks.")
 
         recent_parser = subs.add_parser("recent", help="Query recent tracks.")
-        recent_parser.add_argument("-L", "--loved")
 
         for args, kwargs, parsers in [
             (("-N", "--top-n"),
              {"default": 10, "type": int, "dest": "top_n", "metavar": "N"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser),
             ),
+            (("-n", "--limit"),
+             {"default": 50, "type": int, "dest": "limit", "metavar": "N"},
+             (recent_parser, loved_parser),
+             ),
             (("-P", "--period"), {"default": "overall",
-                                  "choices": lastfm.PERIODS, "dest": "period"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+                                  "choices": lastfm.PERIODS,
+                                  "dest": "period"},
+             (artists_parser, albums_parser, tracks_parser),
             ),
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
                               "choices": ["2x2", "2x4", "3x3", "4x4", "4x2",
@@ -70,52 +77,28 @@ class TopFmApp(Application):
             ),
             (("--exclude-artist",), {"action": "append",
                                      "dest": "artist_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
             (("--exclude-album",), {"action": "append",
                                     "dest": "album_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
             (("--exclude-track",), {"action": "append",
                                     "dest": "track_excludes"},
-             (artists_parser, albums_parser, tracks_parser, recent_parser),
+             (artists_parser, albums_parser, tracks_parser, recent_parser, loved_parser),
             ),
+            (("--unique-artist",), {"action": "store_true",
+                                    "help": "Only include top item for each artist."},
+             (albums_parser, tracks_parser),
+             ),
 
         ]:
             for p in parsers:
                 p.add_argument(*args, **kwargs)
 
-    def _getTops(self, args, lastfm_user):
-        display_name = args.display_name or lastfm_user.name
-
-        handler = getattr(lastfm, f"top{args.subcommand.title()}")
-        tops = handler(lastfm_user, args.period, num=args.top_n,
-                       excludes={
-                           "artist": args.artist_excludes,
-                           "album": args.album_excludes,
-                           "track": args.track_excludes,
-                       })
-
-        if args.period == "overall":
-            reg = datetime.fromtimestamp(lastfm_user.get_unixtime_registered())
-            period = f"overall (Since {reg:%b %d, %Y})"
-        else:
-            period = lastfm.periodString(args.period)
-
-        text = dedent(f"""
-            {display_name}'s Top {args.top_n} {args.subcommand} {period}:\n
-            """)
-        iwitdh = len(str(len(tops))) + 2
-        for i, obj in tops:
-            itext = f"#{i:d}:"
-            obj_text = f"{obj}"
-            text += f" {itext:>{iwitdh}} {obj_text}\n"
-        text += "\n"
-
-        return tops, text
-
-    async def _handleAlbumsCmd(self, args, lastfm_user):
-        tops, text = self._getTops(args, lastfm_user)
+    @staticmethod
+    async def _handleAlbumsCmd(args, lastfm_user):
+        tops, text = _getTops(args, lastfm_user)
         print(text)
 
         collage_path = None
@@ -134,7 +117,7 @@ class TopFmApp(Application):
                 print(str(err))
                 return 4
 
-            assert(img)
+            assert img
             if args.collage_name is None:
                 args.collage_name = \
                     f"{args.subcommand}_collage-{args.collage}-{args.period}"
@@ -147,34 +130,55 @@ class TopFmApp(Application):
                 os.system("eog {}".format(collage_path))
 
         comments = []
-        for _, a in tops:
+        for a in tops:
             comments.append(a.get_url())
 
         if args.post_facebook:
             await _postFacebook(text, collage_path, comments)
 
-    async def _handleArtistsCmd(self, args, lastfm_user):
-        return await self._handleAlbumsCmd(args, lastfm_user)
+    @staticmethod
+    async def _handleArtistsCmd(args, lastfm_user):
+        return await TopFmApp._handleAlbumsCmd(args, lastfm_user)
 
-    async def _handleTracksCmd(self, args, lastfm_user):
-        tops, text = self._getTops(args, lastfm_user)
+    @staticmethod
+    async def _handleTracksCmd(args, lastfm_user):
+        tops, text = _getTops(args, lastfm_user)
         print(text)
 
         comments = []
-        for _, t in tops:
+        for t in tops:
             comments.append(t.get_url())
 
         if args.post_facebook:
             await _postFacebook(text, None, comments)
 
-    async def _handleRecentCmd(self, args, lastfm_user):
-        tracks = lastfm_user.get_recent_tracks(limit=300)
-        for t in tracks:
-            t.track.username = "nicfit"
-            print("<3:", t.track.get_userloved())
-        print(len(tracks))
-        print(tracks[0])
-        print(tracks[-1])
+    @staticmethod
+    async def _handleRecentCmd(args, lastfm_user):
+        # TODO: show album name
+        # TODO: query, show loved, not working
+        # yes, asking for limit=N returns len() N-1, so the +1
+        tracks = lastfm_user.get_recent_tracks(limit=args.limit + 1)
+        tracks = lastfm.filterExcludes(tracks, excludes={"artist": args.artist_excludes,
+                                                         "album": args.album_excludes,
+                                                         "track": args.track_excludes,
+                                                        })
+
+        text = _formatResults(tracks, args, lastfm_user, list_label="")
+        print(text)
+
+    @staticmethod
+    async def _handleLovedCmd(args, lastfm_user):
+        # TODO: show album name
+        # TODO: json output: {"track": recent.track.title, "artist": recent.track.artist.name}
+        loved = lastfm.filterExcludes(
+            lastfm_user.get_loved_tracks(limit=args.limit or None),
+            excludes={"artist": args.artist_excludes,
+                      "album": args.album_excludes,
+                      "track": args.track_excludes,
+                     })
+
+        text = _formatResults(loved, args, lastfm_user, list_label="Last")
+        print(text)
 
     async def _main(self, args):
         log.debug("{} started: {}".format(sys.argv[0], args))
@@ -191,8 +195,7 @@ class TopFmApp(Application):
             CACHE_D.mkdir(parents=True)
         log.debug(f"Using cache directory {CACHE_D}")
 
-        lastfm_user = lastfm.User(args.lastfm_user,
-                                  os.getenv("LASTFM_PASSWORD"))
+        lastfm_user = lastfm.User(args.lastfm_user, os.getenv("LASTFM_PASSWORD"))
 
         handler = getattr(self, f"_handle{args.subcommand.title()}Cmd", None)
         try:
@@ -227,6 +230,52 @@ async def _postFacebook(message, photo_path, comments):
         #for cmt in (comments or []):
         #    fb.put_comment(object_id=put["id"], message=cmt)
         ...
+
+
+def _getTops(args, lastfm_user):
+    handler = getattr(lastfm, f"top{args.subcommand.title()}")
+    handler_kwargs = dict(num=args.top_n,
+                          excludes={"artist": args.artist_excludes,
+                                    "album": args.album_excludes,
+                                    "track": args.track_excludes,
+                                   })
+    if "unique_artist" in args and args.unique_artist:
+        handler_kwargs["unique_artist"] = args.unique_artist
+
+    tops = handler(lastfm_user, args.period, **handler_kwargs)
+
+    text = _formatResults(tops, args, lastfm_user)
+    return tops, text
+
+
+def _formatResults(items, args, lastfm_user, list_label="Top"):
+    display_name = args.display_name or lastfm_user.name
+
+    if "period" not in args or args.period == "overall":
+        reg = datetime.fromtimestamp(lastfm_user.get_unixtime_registered())
+        period = f"overall (Since {reg:%b %d, %Y})"
+    else:
+        period = lastfm.periodString(args.period)
+
+    # top_n = limit
+    if "top_n" not in args and "limit" in args:
+        args.top_n = args.limit
+
+    list_label = f" {list_label} " if list_label else ""
+    text = dedent(f"""
+        {display_name}'s{list_label} {args.top_n} {args.subcommand} {period}:\n
+        """)
+    iwitdh = len(str(len(items))) + 2
+    for i, obj in enumerate(items, 1):
+        itext = f"#{i:d}:"
+        if isinstance(obj, (LovedTrack, PlayedTrack)):
+            obj_text = f"{obj.track.artist.name} - {obj.track.title}"
+        else:
+            obj_text = f"{obj}"
+        text += f" {itext:>{iwitdh}} {obj_text}\n"
+    text += "\n"
+
+    return text
 
 
 app = TopFmApp(version=version)
