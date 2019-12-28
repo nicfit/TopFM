@@ -13,7 +13,7 @@ UNKNOWN_ALBUM_IMG = None  # Set lazily
 UNKNOWN_ALBUM_FILE = Path(__file__).parent / "unknown-cover.jpg"
 
 
-def img1x2x2(tops, prompts=PromptMode.ON):
+def img1x2x2(tops, prompts=PromptMode.ON, disable_cache=False):
     collage = Image.new("RGB", (800, 400), "white")
 
     for i, obj in enumerate(tops[:5], 1):
@@ -21,13 +21,13 @@ def img1x2x2(tops, prompts=PromptMode.ON):
                       (400, 0, 200, 200), (600, 0, 200, 200),
                       (400, 200, 200, 200), (600, 200, 200, 200)][i - 1]
 
-        img = _getImg(i, obj, prompts=prompts)
+        img = _getImg(i, obj.item, prompts=prompts, disable_cache=disable_cache)
         _addCover(collage, img, x, y, w, h)
 
     return collage
 
 
-def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0, prompts=PromptMode.ON):
+def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0, prompts=PromptMode.ON, disable_cache=False):
     if len(tops) < rows * cols:
         raise ValueError("{:d} top image items required, {:d} provided"
                          .format(rows * cols, len(tops)))
@@ -47,7 +47,7 @@ def imgNxN(tops, rows=2, cols=2, sz=IMG_SZ, margin=0, prompts=PromptMode.ON):
     for i, obj in enumerate(tops[:rows * cols], 1):
         x, y = coords[i - 1]
 
-        img = _getImg(i, obj, prompts=prompts)
+        img = _getImg(i, obj.item, prompts=prompts, disable_cache=disable_cache)
         _addCover(collage, img, x, y, sz, sz)
 
     return collage
@@ -59,16 +59,7 @@ def _addCover(image, cover_src, x, y, w, h):
     return cimg
 
 
-def _getImg(i, obj, prompts=PromptMode.ON):
-    global UNKNOWN_ALBUM_IMG
-
-    if isinstance(obj, pylast.Album):
-        print(f"#{i} Album art: {obj.title} by {obj.artist.name}", end=" ")
-    elif isinstance(obj, pylast.Artist):
-        print("Artist img: {artist}".format(i=i, artist=obj.name), end=" ")
-    else:
-        raise ValueError("Invalid type: {}".format(obj.__class__.__name__))
-
+def _imageFromCache(obj):
     try:
         cache_id = obj.get_mbid()
     except pylast.WSError:
@@ -79,16 +70,35 @@ def _getImg(i, obj, prompts=PromptMode.ON):
         cache_id = obj.get_name()
         if hasattr(obj, "artist"):
             cache_id += f"_{obj.artist.name}"
+
     cache_id = cache_id.replace(os.path.sep, '-')
 
     if not CACHE_D.exists():
         CACHE_D.mkdir()
 
-    cached_img = CACHE_D / Path(f"{cache_id}.png")
-    if cached_img.exists():
-        print(" [cached]: {}".format(cached_img))
-        img = Image.open(str(cached_img))
+    cached_path = CACHE_D / Path(f"{cache_id}.png")
+    if cached_path.exists():
+        print(" [cached]: {}".format(cached_path))
+        return Image.open(str(cached_path)), cached_path
+
+    return None, None
+
+
+def _getImg(i, obj, prompts=PromptMode.ON, disable_cache=False):
+    global UNKNOWN_ALBUM_IMG
+
+    if isinstance(obj, pylast.Album):
+        print(f"#{i} Album art: {obj.title} by {obj.artist.name}", end=" ")
+    elif isinstance(obj, pylast.Artist):
+        print("Artist img: {artist}".format(i=i, artist=obj.name), end=" ")
     else:
+        raise ValueError("Invalid type: {}".format(obj.__class__.__name__))
+
+    img, cache_path = None, None
+    if not disable_cache:
+        img, cache_path = _imageFromCache(obj)
+
+    if not img:
         try:
             cover_url = obj.get_cover_image()
         except pylast.WSError:
@@ -113,12 +123,14 @@ def _getImg(i, obj, prompts=PromptMode.ON):
                 img = Image.open(BytesIO(cover_req.content))
             else:
                 raise ValueError(f"Download of '{cover_url}' failed: {cover_req}")
-            img.save(str(cached_img))
+
+            # Update cache if using
+            if not disable_cache:
+                img.save(str(cache_path))
         else:
             img = UNKNOWN_ALBUM_IMG if UNKNOWN_ALBUM_IMG \
                         else Image.open(UNKNOWN_ALBUM_FILE)
             UNKNOWN_ALBUM_IMG = img
             print("  [default]")
 
-    assert img
     return img

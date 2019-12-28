@@ -4,14 +4,13 @@ import argparse
 from textwrap import dedent
 from datetime import datetime
 
-from pylast import LovedTrack, PlayedTrack
+from pylast import LovedTrack, PlayedTrack, TopItem
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 
 from . import lastfm, collage, CACHE_D, version, PromptMode
 
 log = getLogger("topfm.__main__")
-TOPFM_URL = "https://github.com/nicfit/TopFM"
 
 
 class TopFmApp(Application):
@@ -84,6 +83,10 @@ class TopFmApp(Application):
                                     "help": "Only include top item for each artist."},
              (albums_parser, tracks_parser),
              ),
+            (("--no-cache",), {"action": "store_true",
+                               "help": "Refrain from using/updating image cache."},
+             (albums_parser, artists_parser),
+             ),
 
         ]:
             for p in parsers:
@@ -91,21 +94,22 @@ class TopFmApp(Application):
 
     @staticmethod
     async def _handleAlbumsCmd(args, lastfm_user):
-        tops, text = _getTops(args, lastfm_user)
-        print(text)
+        tops, formatted = _getTops(args, lastfm_user)
+        print(formatted)
 
-        collage_path = None
         if args.collage:
             try:
                 if args.collage == "1x2x2":
-                    img = collage.img1x2x2(tops, prompts=args.prompt_mode)
+                    img = collage.img1x2x2(tops, prompts=args.prompt_mode,
+                                           disable_cache=args.no_cache)
                 else:
-                    assert(args.collage.count("x") == 1)
+                    assert args.collage.count("x") == 1
                     rows, cols = (int(n) for n in args.collage.split("x"))
                     img = collage.imgNxN(tops, rows=rows, cols=cols,
                                          sz=args.image_size,
                                          margin=args.image_margin,
-                                         prompts=args.prompt_mode)
+                                         prompts=args.prompt_mode,
+                                         disable_cache=args.no_cache)
             except ValueError as err:
                 print(str(err))
                 return 4
@@ -122,22 +126,14 @@ class TopFmApp(Application):
             if not args.no_image_view:
                 os.system("eog {}".format(collage_path))
 
-        comments = []
-        for a in tops:
-            comments.append(a.get_url())
-
     @staticmethod
     async def _handleArtistsCmd(args, lastfm_user):
         return await TopFmApp._handleAlbumsCmd(args, lastfm_user)
 
     @staticmethod
     async def _handleTracksCmd(args, lastfm_user):
-        tops, text = _getTops(args, lastfm_user)
-        print(text)
-
-        comments = []
-        for t in tops:
-            comments.append(t.get_url())
+        tops, formatted = _getTops(args, lastfm_user)
+        print(formatted)
 
     @staticmethod
     async def _handleRecentCmd(args, lastfm_user):
@@ -204,7 +200,7 @@ def _getTops(args, lastfm_user):
     return tops, text
 
 
-def _formatResults(items, args, lastfm_user, list_label="Top"):
+def _formatResults(top_items, args, lastfm_user, list_label="Top"):
     display_name = args.display_name or lastfm_user.name
 
     if "period" not in args or args.period == "overall":
@@ -217,20 +213,30 @@ def _formatResults(items, args, lastfm_user, list_label="Top"):
     if "top_n" not in args and "limit" in args:
         args.top_n = args.limit
 
-    list_label = f" {list_label} " if list_label else ""
+    list_label = f" {list_label}" if list_label else ""
     text = dedent(f"""
         {display_name}'s{list_label} {args.top_n} {args.subcommand} {period}:\n
         """)
-    iwitdh = len(str(len(items))) + 2
-    for i, obj in enumerate(items, 1):
+    iwitdh = len(str(len(top_items))) + 2
+    for i, obj in enumerate(top_items, 1):
         itext = f"#{i:d}:"
-        if isinstance(obj, (LovedTrack, PlayedTrack)):
+        weight = None
+
+        if isinstance(obj, TopItem):
+            obj_text = str(obj.item)
+            weight = obj.weight
+        elif isinstance(obj, (LovedTrack, PlayedTrack)):
             obj_text = f"{obj.track.artist.name} - {obj.track.title}"
         else:
-            obj_text = f"{obj}"
-        text += f" {itext:>{iwitdh}} {obj_text}\n"
-    text += "\n"
+            raise NotImplemented(f"Unknown format type: {obj.__class__.__name__}")
 
+        weight_text = ""
+        if weight:
+            weight_text = f" ({weight} listens)"
+
+        text += f" {itext:>{iwitdh}} {obj_text}{weight_text}\n"
+
+    text += "\n"
     return text
 
 

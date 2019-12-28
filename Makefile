@@ -4,7 +4,7 @@
         test-all test-data build-release freeze-release tag-release \
         pypi-release web-release github-release cookiecutter requirements
 SRC_DIRS = ./topfm
-TEST_DIR = ./tests
+TEST_DIR = ./test
 NAME ?= Travis Shirk
 EMAIL ?= travis@pobox.com
 GITHUB_USER ?= nicfit
@@ -69,31 +69,39 @@ clean-pyc:
 clean-test:
 	rm -fr .tox/
 	rm -f .coverage
+	find . -name '.pytest_cache' -type d -exec rm -rf {} +
+	-rm .testmondata
 
 clean-patch:
 	find . -name '*.rej' -exec rm -f '{}' \;
 	find . -name '*.orig' -exec rm -f '{}' \;
 
 lint:
-	flake8 $(SRC_DIRS)
+	tox -e lint
 
 _PYTEST_OPTS=
 ifdef TEST_PDB
     _PDB_OPTS=--pdb -s
 endif
 test:
-	pytest $(_PYTEST_OPTS) $(_PDB_OPTS) ${TEST_DIR}
+	tox -e default -- $(_PYTEST_OPTS) $(_PDB_OPTS)
+
+test-devel:
+	-tox -e default -- --testmon
 
 test-all:
-	tox
+	tox -e clean
+	tox --parallel=all
+	tox -e coverage
 
 coverage:
-	pytest --cov=./topfm \
-           --cov-report=html --cov-report term \
-           --cov-config=setup.cfg ${TEST_DIR}
+	tox -e coverage
 
-coverage-view: coverage
-	${BROWSER} build/tests/coverage/index.html;\
+coverage-view:
+	@if [ ! -f build/tests/coverage/index.html ]; then \
+		${MAKE} coverage; \
+	fi
+	@${BROWSER} build/tests/coverage/index.html
 
 docs:
 	# Using cookiecutter set add_docs="yes" to enable
@@ -174,7 +182,7 @@ github-release:
                    --repo ${GITHUB_REPO} --tag ${RELEASE_TAG} \
                    --name "$${name}" $${prerelease}
 	for file in $$(find dist -type f -exec basename {} \;) ; do \
-        echo "FILE: $$file"; \
+        echo "Uploading: $$file"; \
         github-release upload --user "${GITHUB_USER}" --repo ${GITHUB_REPO} \
                    --tag ${RELEASE_TAG} --name $${file} --file dist/$${file}; \
     done
@@ -189,7 +197,7 @@ pypi-release:
 	for f in `find dist -type f -name ${PROJECT_NAME}-${VERSION}.tar.gz \
               -o -name \*.egg -o -name \*.whl`; do \
         if test -f $$f ; then \
-            twine upload -r ${PYPI_REPO} --skip-existing $$f ; \
+            twine upload --verbose -r ${PYPI_REPO} --skip-existing $$f ; \
         fi \
 	done
 
