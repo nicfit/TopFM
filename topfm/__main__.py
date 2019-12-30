@@ -28,7 +28,6 @@ class TopFmApp(Application):
         albums_parser = subs.add_parser("albums", help="Query top albums.")
         tracks_parser = subs.add_parser("tracks", help="Query top tracks.")
         loved_parser = subs.add_parser("loved", help="Query loved tracks.")
-
         recent_parser = subs.add_parser("recent", help="Query recent tracks.")
 
         for args, kwargs, parsers in [
@@ -82,11 +81,15 @@ class TopFmApp(Application):
             (("--unique-artist",), {"action": "store_true",
                                     "help": "Only include top item for each artist."},
              (albums_parser, tracks_parser),
-             ),
+            ),
             (("--no-cache",), {"action": "store_true",
                                "help": "Refrain from using/updating image cache."},
              (albums_parser, artists_parser),
-             ),
+            ),
+            (("-L", "--show-listens"), {"action": "store_true",
+                                         "help": "Show # of listens with each result."},
+             (artists_parser, albums_parser, tracks_parser),
+            ),
 
         ]:
             for p in parsers:
@@ -152,7 +155,6 @@ class TopFmApp(Application):
     @staticmethod
     async def _handleLovedCmd(args, lastfm_user):
         # TODO: show album name
-        # TODO: json output: {"track": recent.track.title, "artist": recent.track.artist.name}
         loved = lastfm.filterExcludes(
             lastfm_user.get_loved_tracks(limit=args.limit or None),
             excludes={"artist": args.artist_excludes,
@@ -162,6 +164,12 @@ class TopFmApp(Application):
 
         text = _formatResults(loved, args, lastfm_user, list_label="Last")
         print(text)
+        # TODO: json output: {"track": recent.track.title, "artist": recent.track.artist.name}
+        '''
+        import json
+        for item in loved:
+            print(json.dumps({"track": item.track.title, "artist": item.track.artist.name}))
+        '''
 
     async def _main(self, args):
         log.debug("{} started: {}".format(sys.argv[0], args))
@@ -231,7 +239,7 @@ def _formatResults(top_items, args, lastfm_user, list_label="Top"):
             raise NotImplemented(f"Unknown format type: {obj.__class__.__name__}")
 
         weight_text = ""
-        if weight:
+        if weight and args.show_listens:
             weight_text = f" ({weight} listens)"
 
         text += f" {itext:>{iwitdh}} {obj_text}{weight_text}\n"
