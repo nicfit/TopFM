@@ -81,7 +81,7 @@ def _imageFromCache(obj):
         print(" [cached]: {}".format(cached_path))
         return Image.open(str(cached_path)), cached_path
 
-    return None, None
+    return None, cached_path
 
 
 def _getImg(i, obj, prompts=PromptMode.ON, disable_cache=False):
@@ -109,10 +109,10 @@ def _getImg(i, obj, prompts=PromptMode.ON, disable_cache=False):
             if prompts == PromptMode.FAIL:
                 raise ValueError("No cover found, and prompting is fail mode")
 
-            cover_url = input("\nNo cover URL, enter download URL: ")\
+            cover_url = input("\nNo cover URL, enter download URL: ").strip()\
                             if prompts == PromptMode.ON else UNKNOWN_ALBUM_FILE
 
-        if cover_url != UNKNOWN_ALBUM_FILE:
+        if cover_url and cover_url != UNKNOWN_ALBUM_FILE:
             print(" [downloading]: {}".format(cover_url))
             try:
                 cover_req = requests.get(cover_url)

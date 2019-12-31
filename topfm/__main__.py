@@ -4,7 +4,7 @@ import argparse
 from textwrap import dedent
 from datetime import datetime
 
-from pylast import LovedTrack, PlayedTrack, TopItem
+import pylast
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 
@@ -28,7 +28,6 @@ class TopFmApp(Application):
         albums_parser = subs.add_parser("albums", help="Query top albums.")
         tracks_parser = subs.add_parser("tracks", help="Query top tracks.")
         loved_parser = subs.add_parser("loved", help="Query loved tracks.")
-
         recent_parser = subs.add_parser("recent", help="Query recent tracks.")
 
         for args, kwargs, parsers in [
@@ -48,7 +47,7 @@ class TopFmApp(Application):
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
                               "choices": ["2x2", "2x4", "3x3", "4x4", "4x2",
                                           "5x5", "5x2", "5x3", "5x100",
-                                          "1x2x2", "10x10", "20x20"],
+                                          "1x2x2", "10x10", "20x20", "8x8"],
                               "dest": "collage"},
              (artists_parser, albums_parser),
             ),
@@ -82,11 +81,15 @@ class TopFmApp(Application):
             (("--unique-artist",), {"action": "store_true",
                                     "help": "Only include top item for each artist."},
              (albums_parser, tracks_parser),
-             ),
+            ),
             (("--no-cache",), {"action": "store_true",
                                "help": "Refrain from using/updating image cache."},
              (albums_parser, artists_parser),
-             ),
+            ),
+            (("-L", "--show-listens"), {"action": "store_true",
+                                         "help": "Show # of listens with each result."},
+             (artists_parser, albums_parser, tracks_parser),
+            ),
 
         ]:
             for p in parsers:
@@ -117,7 +120,7 @@ class TopFmApp(Application):
             assert img
             if args.collage_name is None:
                 args.collage_name = \
-                    f"{args.subcommand}_collage-{args.collage}-{args.period}"
+                    f"[{lastfm_user}]{args.subcommand}_collage-{args.collage}-{args.period}"
 
             collage_path = "{}.png".format(args.collage_name)
             print("\nWriting {}...".format(collage_path))
@@ -152,7 +155,6 @@ class TopFmApp(Application):
     @staticmethod
     async def _handleLovedCmd(args, lastfm_user):
         # TODO: show album name
-        # TODO: json output: {"track": recent.track.title, "artist": recent.track.artist.name}
         loved = lastfm.filterExcludes(
             lastfm_user.get_loved_tracks(limit=args.limit or None),
             excludes={"artist": args.artist_excludes,
@@ -162,6 +164,12 @@ class TopFmApp(Application):
 
         text = _formatResults(loved, args, lastfm_user, list_label="Last")
         print(text)
+        # TODO: json output: {"track": recent.track.title, "artist": recent.track.artist.name}
+        '''
+        import json
+        for item in loved:
+            print(json.dumps({"track": item.track.title, "artist": item.track.artist.name}))
+        '''
 
     async def _main(self, args):
         log.debug("{} started: {}".format(sys.argv[0], args))
@@ -181,7 +189,11 @@ class TopFmApp(Application):
         lastfm_user = lastfm.User(args.lastfm_user, os.getenv("LASTFM_PASSWORD"))
 
         handler = getattr(self, f"_handle{args.subcommand.title()}Cmd", None)
-        await handler(args, lastfm_user)
+        try:
+            await handler(args, lastfm_user)
+        except pylast.WSError as auth_err:
+            print(f"{auth_err}", file=sys.stderr)
+            return 2
 
 
 def _getTops(args, lastfm_user):
@@ -222,16 +234,16 @@ def _formatResults(top_items, args, lastfm_user, list_label="Top"):
         itext = f"#{i:d}:"
         weight = None
 
-        if isinstance(obj, TopItem):
+        if isinstance(obj, pylast.TopItem):
             obj_text = str(obj.item)
             weight = obj.weight
-        elif isinstance(obj, (LovedTrack, PlayedTrack)):
+        elif isinstance(obj, (pylast.LovedTrack, pylast.PlayedTrack)):
             obj_text = f"{obj.track.artist.name} - {obj.track.title}"
         else:
             raise NotImplemented(f"Unknown format type: {obj.__class__.__name__}")
 
         weight_text = ""
-        if weight:
+        if weight and args.show_listens:
             weight_text = f" ({weight} listens)"
 
         text += f" {itext:>{iwitdh}} {obj_text}{weight_text}\n"
