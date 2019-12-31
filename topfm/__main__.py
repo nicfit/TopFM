@@ -47,7 +47,7 @@ class TopFmApp(Application):
             (("--collage",), {"default": None, "const": "1x2x2", "nargs": "?",
                               "choices": ["2x2", "2x4", "3x3", "4x4", "4x2",
                                           "5x5", "5x2", "5x3", "5x100",
-                                          "1x2x2", "10x10", "20x20"],
+                                          "1x2x2", "10x10", "20x20", "8x8"],
                               "dest": "collage"},
              (artists_parser, albums_parser),
             ),
