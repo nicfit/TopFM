@@ -4,7 +4,7 @@ import argparse
 from textwrap import dedent
 from datetime import datetime
 
-from pylast import LovedTrack, PlayedTrack, TopItem
+import pylast
 from nicfit.aio import Application
 from nicfit.logger import getLogger
 
@@ -120,7 +120,7 @@ class TopFmApp(Application):
             assert img
             if args.collage_name is None:
                 args.collage_name = \
-                    f"{args.subcommand}_collage-{args.collage}-{args.period}"
+                    f"[{lastfm_user}]{args.subcommand}_collage-{args.collage}-{args.period}"
 
             collage_path = "{}.png".format(args.collage_name)
             print("\nWriting {}...".format(collage_path))
@@ -189,7 +189,11 @@ class TopFmApp(Application):
         lastfm_user = lastfm.User(args.lastfm_user, os.getenv("LASTFM_PASSWORD"))
 
         handler = getattr(self, f"_handle{args.subcommand.title()}Cmd", None)
-        await handler(args, lastfm_user)
+        try:
+            await handler(args, lastfm_user)
+        except pylast.WSError as auth_err:
+            print(f"{auth_err}", file=sys.stderr)
+            return 2
 
 
 def _getTops(args, lastfm_user):
@@ -230,10 +234,10 @@ def _formatResults(top_items, args, lastfm_user, list_label="Top"):
         itext = f"#{i:d}:"
         weight = None
 
-        if isinstance(obj, TopItem):
+        if isinstance(obj, pylast.TopItem):
             obj_text = str(obj.item)
             weight = obj.weight
-        elif isinstance(obj, (LovedTrack, PlayedTrack)):
+        elif isinstance(obj, (pylast.LovedTrack, pylast.PlayedTrack)):
             obj_text = f"{obj.track.artist.name} - {obj.track.title}"
         else:
             raise NotImplemented(f"Unknown format type: {obj.__class__.__name__}")
