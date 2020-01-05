@@ -28,9 +28,8 @@ help:
 	@echo "build - byte-compile python files and generate other build objects"
 	@echo "lint - check style with flake8"
 	@echo "test - run tests quickly with the default Python"
-	@echo "test-all - run tests on every Python version with tox"
+	@echo "test-all - run tests on various versions of Python version with tox"
 	@echo "coverage - check code coverage quickly with the default Python"
-	@echo "test-all - run tests on various Python versions with tox"
 	@echo "release - package and upload a release"
 	@echo "          PYPI_REPO=[pypitest]|pypi"
 	@echo "pre-release - check repo and show version, generate changelog, etc."
@@ -117,15 +116,15 @@ pre-release: lint test changelog requirements
 	$(eval RELEASE_TAG = v${VERSION})
 	@echo "RELEASE_TAG: $(RELEASE_TAG)"
 	@echo "RELEASE_NAME: $(RELEASE_NAME)"
-	check-manifest
-	@if git tag -l | grep -E '^$(RELEASE_TAG)$$' > /dev/null; then \
+	tox -e check-manifest
+	@if git tag -l | grep -E '^$(shell echo $${RELEASE_TAG} | sed 's|\.|.|g')$$' > /dev/null; then \
         echo "Version tag '${RELEASE_TAG}' already exists!"; \
         false; \
     fi
 	IFS=$$'\n';\
-    for auth in `git authors --list | sed 's/.* <\(.*\)>/\1/'`; do \
+	for auth in `git authors --list | sed 's/.* <\(.*\)>/\1/' | grep -v users.noreply.github.com`; do \
 		echo "Checking $$auth...";\
-		grep "$$auth" AUTHORS.rst || echo "* $$auth" >> AUTHORS.rst;\
+		grep "$$auth" AUTHORS.rst || echo "  * $$auth" >> AUTHORS.rst;\
 	done
 	@test -n "${GITHUB_USER}" || (echo "GITHUB_USER not set, needed for github" && false)
 	@test -n "${GITHUB_TOKEN}" || (echo "GITHUB_TOKEN not set, needed for github" && false)
@@ -133,8 +132,7 @@ pre-release: lint test changelog requirements
 	@git status -s -b
 
 requirements:
-	nicfit requirements
-	pip-compile -U requirements.txt -o ./requirements.txt
+	tox -e requirements
 
 changelog:
 	last=`git tag -l --sort=version:refname | grep '^v[0-9]' | tail -n1`;\
@@ -191,7 +189,7 @@ web-release:
 	@# Not implemented
 	@true
 
-upload-release: github-release pypi-release web-release
+upload-release: pypi-release github-release web-release
 
 pypi-release:
 	for f in `find dist -type f -name ${PROJECT_NAME}-${VERSION}.tar.gz \
