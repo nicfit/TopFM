@@ -13,6 +13,7 @@ PYPI_REPO = pypitest
 PROJECT_NAME = $(shell python setup.py --name 2> /dev/null)
 VERSION = $(shell python setup.py --version 2> /dev/null)
 RELEASE_NAME = $(shell python setup.py --release-name 2> /dev/null)
+RELEASE_TAG = v$(VERSION)
 CHANGELOG = HISTORY.rst
 CHANGELOG_HEADER = v${VERSION} ($(shell date --iso-8601))$(if ${RELEASE_NAME}, : ${RELEASE_NAME},)
 
@@ -103,7 +104,7 @@ coverage-view:
 	@${BROWSER} build/tests/coverage/index.html
 
 docs:
-	# Using cookiecutter set add_docs="yes" to enable
+	# Using cookiecutter set add_docs="yes" to enabl
 
 docs-dist: docs
 
@@ -113,10 +114,10 @@ clean-docs:
 
 pre-release: lint test changelog requirements
 	@echo "VERSION: $(VERSION)"
-	$(eval RELEASE_TAG = v${VERSION})
 	@echo "RELEASE_TAG: $(RELEASE_TAG)"
 	@echo "RELEASE_NAME: $(RELEASE_NAME)"
 	tox -e check-manifest
+	twine check dist/${PROJECT_NAME}-${VERSION}.tar.gz
 	@if git tag -l | grep -E '^$(shell echo $${RELEASE_TAG} | sed 's|\.|.|g')$$' > /dev/null; then \
         echo "Version tag '${RELEASE_TAG}' already exists!"; \
         false; \

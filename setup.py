@@ -64,7 +64,7 @@ def getPackageInfo():
     if os.path.exists("HISTORY.rst"):
         with io.open("HISTORY.rst", encoding='utf-8') as history_file:
             history = history_file.read().replace(".. :changelog:", "")
-    info_dict["long_description"] = readme + "\n\n" + history
+    info_dict["long_description"] = readme #+ "\n\n" + history
 
     return info_dict, requirements
 
