@@ -15,6 +15,6 @@ pillow==7.0.0
 pylast==3.2.0
 pyparsing==2.4.6          # via packaging
 pyyaml==5.2               # via nicfit.py
-requests==2.22.0
+requests==2.23.0
 six==1.13.0               # via packaging
 urllib3==1.25.8           # via requests
