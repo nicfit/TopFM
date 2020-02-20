@@ -4,7 +4,7 @@ flake8==3.7.9
 git+https://github.com/nicfit/gitchangelog.git
 ipdb==0.11
 nicfit.py[cookiecutter]==0.8.5
-pip-tools==4.4.1
+pip-tools==4.5.0
 pss==1.42
 pyaml==19.12.0
 sphinx_rtd_theme==0.4.0
