@@ -191,6 +191,9 @@ class TopFmApp(Application):
         handler = getattr(self, f"_handle{args.subcommand.title()}Cmd", None)
         try:
             await handler(args, lastfm_user)
+        except lastfm.TooFewResults as ex:
+            print(ex, file=sys.stderr)
+            return 2
         except pylast.WSError as auth_err:
             print(f"{auth_err}", file=sys.stderr)
             return 2

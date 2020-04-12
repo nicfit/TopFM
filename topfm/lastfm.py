@@ -8,6 +8,10 @@ API_KEY = "1932ab33ea535ba390526dae88a782af"
 API_SEC = "aa8ee0a4c0a2bcc5bd33e506e7a5fefe"
 
 
+class TooFewResults(Exception):
+    pass
+
+
 def _getItemObj(item):
     """Extract the lastfm object from a list item."""
     if isinstance(item, (pylast.PlayedTrack, pylast.LovedTrack)):
@@ -132,7 +136,7 @@ def _lastfmGet(func, period, num=4, excludes=None, unique_artist=False):
 
     tops = tops[:num]
     if len(tops) != num:
-        raise Exception("Requested number of items not returned.")
+        raise TooFewResults(f"Unable to obtain {num} results.")
     else:
         return tops
 
