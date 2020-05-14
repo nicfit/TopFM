@@ -4,6 +4,9 @@ main:
     - pylast
     - requests
 
+extra_facebook:
+    - aioauth-client
+
 test:
     - pytest
     - pytest-cov

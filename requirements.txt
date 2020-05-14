@@ -4,17 +4,22 @@
 #
 #    pip-compile --output-file=./requirements.txt requirements.txt
 #
-attrs==19.3.0             # via nicfit.py
+aioauth-client==0.21.0    # via -r requirements.txt
+aiohttp==3.6.2            # via aioauth-client
+async-timeout==3.0.1      # via aiohttp
+attrs==19.3.0             # via aiohttp, nicfit.py
 certifi==2020.4.5.1       # via requests
-chardet==3.0.4            # via requests
-deprecation==2.0.7        # via nicfit.py
-idna==2.8                 # via requests
+chardet==3.0.4            # via aiohttp, requests
+deprecation==2.1.0        # via nicfit.py
+idna==2.8                 # via requests, yarl
+multidict==4.7.5          # via aiohttp, yarl
 nicfit.py==0.8.6          # via -r requirements.txt
 packaging==20.3           # via deprecation
-pillow==7.1.1             # via -r requirements.txt
+pillow==7.1.2             # via -r requirements.txt
 pylast==3.2.0             # via -r requirements.txt
 pyparsing==2.4.7          # via packaging
 pyyaml==5.3.1             # via nicfit.py
 requests==2.22.0          # via -r requirements.txt
 six==1.14.0               # via packaging
-urllib3==1.25.8           # via requests
+urllib3==1.25.9           # via requests
+yarl==1.4.2               # via aiohttp

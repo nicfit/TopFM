@@ -9,8 +9,13 @@ from nicfit.aio import Application
 from nicfit.logger import getLogger
 
 from . import lastfm, collage, CACHE_D, version, PromptMode
-
 log = getLogger("topfm.__main__")
+
+try:
+    from . import _facebook
+    _HAVE_FB = True
+except ImportError:
+    _HAVE_FB = False
 
 
 class TopFmApp(Application):
@@ -18,6 +23,8 @@ class TopFmApp(Application):
         parser.add_argument("--display-name")
         parser.add_argument("-u", "--user", default="nicfit",
                             dest="lastfm_user", metavar="LASTFM_USER")
+        if _HAVE_FB:
+            parser.add_argument("--post-facebook", action="store_true")
 
         prompt_group = parser.add_mutually_exclusive_group()
         prompt_group.add_argument("--no-prompt", action="store_true")
@@ -100,6 +107,7 @@ class TopFmApp(Application):
         tops, formatted = _getTops(args, lastfm_user)
         print(formatted)
 
+        collage_path = None
         if args.collage:
             try:
                 if args.collage == "1x2x2":
@@ -128,6 +136,13 @@ class TopFmApp(Application):
 
             if not args.no_image_view:
                 os.system("eog {}".format(collage_path))
+
+        if "post_facebook" in args and args.post_facebook:
+            comments = []
+            for a in tops:
+                comments.append(f"{a}")
+
+            await _facebook.post(formatted, collage_path, comments)
 
     @staticmethod
     async def _handleArtistsCmd(args, lastfm_user):
