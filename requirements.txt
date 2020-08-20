@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=./requirements.txt requirements.txt
 #
-attrs==19.3.0             # via nicfit.py
+attrs==20.1.0             # via nicfit.py
 certifi==2020.4.5.1       # via requests
 chardet==3.0.4            # via requests
 deprecation==2.0.7        # via nicfit.py
