@@ -12,7 +12,7 @@ idna==2.8                 # via requests
 nicfit.py==0.8.7          # via -r requirements.txt
 packaging==20.3           # via deprecation
 pillow==7.1.1             # via -r requirements.txt
-pylast==3.2.0             # via -r requirements.txt
+pylast==4.0.0             # via -r requirements.txt
 pyparsing==2.4.7          # via packaging
 pyyaml==5.3.1             # via nicfit.py
 requests==2.22.0          # via -r requirements.txt
