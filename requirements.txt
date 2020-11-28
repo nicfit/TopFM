@@ -10,7 +10,7 @@ chardet==3.0.4            # via requests
 deprecation==2.0.7        # via nicfit.py
 idna==2.8                 # via requests
 nicfit.py==0.8.7          # via -r requirements.txt
-packaging==20.3           # via deprecation
+packaging==20.7           # via deprecation
 pillow==7.1.1             # via -r requirements.txt
 pylast==3.2.0             # via -r requirements.txt
 pyparsing==2.4.7          # via packaging
