@@ -233,7 +233,7 @@ def _formatResults(top_items, args, lastfm_user, list_label="Top"):
         {display_name}'s{list_label} {args.top_n} {args.subcommand} {period}:\n
         """)
     iwitdh = len(str(len(top_items))) + 2
-    for i, obj in enumerate(top_items, 1):
+    for i, obj in enumerate(top_items[:args.top_n], 1):
         itext = f"#{i:d}:"
         weight = None
 
