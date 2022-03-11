@@ -1,4 +1,4 @@
-Pillow==7.1.0
+Pillow==9.0.1
 nicfit.py==0.8.7
 pylast==3.2.0
 requests==2.20.1
