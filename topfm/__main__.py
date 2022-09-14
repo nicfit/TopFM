@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from pathlib import Path
 from textwrap import dedent
 from datetime import datetime
 
@@ -90,6 +91,10 @@ class TopFmApp(Application):
                                          "help": "Show # of listens with each result."},
              (artists_parser, albums_parser, tracks_parser),
             ),
+            (("-d", "--directory"), {"type": Path, "default": Path("."),
+                                     "help": "Directory to write outtput."},
+             (artists_parser, albums_parser),
+             ),
 
         ]:
             for p in parsers:
@@ -117,13 +122,12 @@ class TopFmApp(Application):
                 print(str(err))
                 return 4
 
-            assert img
             if args.collage_name is None:
                 args.collage_name = \
                     f"[{lastfm_user}]{args.subcommand}_collage-{args.collage}-{args.period}"
 
-            collage_path = "{}.png".format(args.collage_name)
-            print("\nWriting {}...".format(collage_path))
+            collage_path = args.directory / f"{args.collage_name}.png"
+            print(f"\nWriting {collage_path}...")
             img.save(collage_path)
 
             if not args.no_image_view:
