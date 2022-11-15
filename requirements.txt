@@ -18,7 +18,7 @@ nicfit-py==0.8.7
     # via -r requirements.txt
 packaging==21.3
     # via deprecation
-pillow==9.2.0
+pillow==9.3.0
     # via -r requirements.txt
 pylast==3.2.0
     # via -r requirements.txt
