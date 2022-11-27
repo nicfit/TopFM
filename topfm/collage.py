@@ -110,19 +110,23 @@ def _getImg(i, obj, prompts=PromptMode.ON, disable_cache=False):
                 raise ValueError("No cover found, and prompting is fail mode")
 
             cover_url = input("\nNo cover URL, enter download URL: ").strip()\
-                            if prompts == PromptMode.ON else UNKNOWN_ALBUM_FILE
+                if prompts == PromptMode.ON else UNKNOWN_ALBUM_FILE
 
         if cover_url and cover_url != UNKNOWN_ALBUM_FILE:
-            print(" [downloading]: {}".format(cover_url))
-            try:
-                cover_req = requests.get(cover_url)
-            except Exception as ex:
-                raise ValueError(str(ex)) from None
-
-            if cover_req.status_code == 200:
-                img = Image.open(BytesIO(cover_req.content))
+            if cover_url.startswith("file://"):
+                print(" [copying]: {}".format(cover_url))
+                img = Image.open(open(cover_url[len("file://"):], "rb"))
             else:
-                raise ValueError(f"Download of '{cover_url}' failed: {cover_req}")
+                print(" [downloading]: {}".format(cover_url))
+                try:
+                    cover_req = requests.get(cover_url)
+                except Exception as ex:
+                    raise ValueError(str(ex)) from None
+
+                if cover_req.status_code == 200:
+                    img = Image.open(BytesIO(cover_req.content))
+                else:
+                    raise ValueError(f"Download of '{cover_url}' failed: {cover_req}")
 
             # Update cache if using
             if not disable_cache:
