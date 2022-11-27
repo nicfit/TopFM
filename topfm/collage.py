@@ -62,11 +62,11 @@ def _addCover(image, cover_src, x, y, w, h):
 def _imageFromCache(obj):
     try:
         cache_id = obj.get_mbid()
-    except pylast.WSError:
+    except (pylast.WSError, AttributeError):
         # Fall thru...
         cache_id = None
 
-    if not cache_id:
+    if cache_id is None:
         cache_id = obj.get_name()
         if hasattr(obj, "artist"):
             cache_id += f"_{obj.artist.name}"

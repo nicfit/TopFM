@@ -1,11 +1,17 @@
 import re
 import datetime
+from logging import getLogger
 
 import pylast
 from pylast import LastFMNetwork
 
 API_KEY = "1932ab33ea535ba390526dae88a782af"
 API_SEC = "aa8ee0a4c0a2bcc5bd33e506e7a5fefe"
+log = getLogger(__name__)
+
+
+class TooFewResults(Exception):
+    pass
 
 
 def _getItemObj(item):
@@ -116,23 +122,25 @@ def uniqueArtist(items) -> list:
     return results
 
 
-def _lastfmGet(func, period, num=4, excludes=None, unique_artist=False):
+def _lastfmGet(func, period, num=4, excludes=None, unique_artist=False, multi=1):
+    multi = multi or 1
     if period[-1] == 's':
         # Pylast periods are not plural, as are the constants are opts so chop
         period = period[:-1]
 
     tops = []
-    attempts, max_attempts = 0, 5
+    attempts, max_attempts = 1, 5
 
     while len(tops) < num and attempts < max_attempts:
-        attempts += 1
-        tops = filterExcludes(func(period, limit=num + (25 * attempts)), excludes)
+        tops = filterExcludes(func(period, limit=(num * multi) + (125 * attempts)), excludes)
+        log.debug(f"{func} (attempt #{attempts}): returned {len(tops)} filtered items.")
         if unique_artist:
             tops = uniqueArtist(tops)
+        attempts += 1
 
     tops = tops[:num]
     if len(tops) != num:
-        raise Exception("Requested number of items not returned.")
+        raise TooFewResults(f"Unable to obtain {num} results.")
     else:
         return tops
 
@@ -143,11 +151,12 @@ def topArtists(user, period, num=5, excludes=None):
 
 def topAlbums(user, period, num=5, excludes: list=None, unique_artist=False):
     return _lastfmGet(user.get_top_albums, period, num=num, excludes=excludes,
-                      unique_artist=unique_artist)
+                      multi=2 if unique_artist else 1, unique_artist=unique_artist)
 
 
 def topTracks(user, period, num=5, excludes=None, unique_artist=False):
     return _lastfmGet(user.get_top_tracks, period, num=num, excludes=excludes,
+                      multi=3 if unique_artist else 1,
                       unique_artist=unique_artist)
 
 
