@@ -115,9 +115,9 @@ def uniqueArtist(items) -> list:
 
     for item in items:
         obj = _getItemObj(item)
-        if obj.artist.name not in seen_artists:
+        if obj.artist.name.lower() not in seen_artists:
             results.append(item)
-            seen_artists.add(obj.artist.name)
+            seen_artists.add(obj.artist.name.lower())
 
     return results
 
@@ -179,7 +179,7 @@ def periodToTimedelta(p):
             if unit == "days":
                 return datetime.timedelta(days=val)
             else:
-                return datetime.timedelta(weeks=val * 4)
+                return datetime.timedelta(weeks=(val + 1) * 4)
 
     raise ValueError(f"Unsupported period value: `{p}`")
 
