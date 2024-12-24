@@ -26,5 +26,5 @@ pyyaml==6.0.2
     # via nicfit-py
 requests==2.23.0
     # via -r requirements.txt
-urllib3==1.25.11
+urllib3==1.26.5
     # via requests
