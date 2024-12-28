@@ -12,7 +12,7 @@ chardet==3.0.4
     # via requests
 deprecation==2.1.0
     # via nicfit-py
-idna==2.10
+idna==3.7
     # via requests
 nicfit-py==0.8.7
     # via -r requirements.txt
